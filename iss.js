@@ -1,23 +1,11 @@
 // iss.js
-/**
- * Makes a single API request to retrieve the lat/lng for a given IPv4 address.
- * Input:
- *   - The ip (ipv4) address (string)
- *   - A callback (to pass back an error or the lat/lng object)
- * Returns (via Callback):
- *   - An error, if any (nullable)
- *   - The lat and lng as an object (null if error).
- *      Example: { latitude: '49.27670', longitude: '-123.13000' }
- */
 
 const request = require('request');
-
 
 const fetchMyIP = function(callback) {
   // use request to fetch IP address from JSON API
   request(`https://api.ipify.org?format=json`, (err, response, body) =>{
-    console.log(`Code is: `, response.statusCode);
-
+    console.log(`Response code for fetching our IP is: `, response.statusCode);
     if (err) {
       return callback(err, null);
     }
@@ -33,9 +21,8 @@ const fetchMyIP = function(callback) {
 };
 
 
-
 const fetchCoordsByIP = function(ipAdress, callback) {
-  console.log(`Checking IPstring`, ipAdress);
+  console.log(`Checking IPstring:`, ipAdress);
   request(`http://ipwho.is/${ipAdress}`, (err, response, body) =>{
     if (err) {
       return callback(err, null);
@@ -56,7 +43,8 @@ const fetchCoordsByIP = function(ipAdress, callback) {
         latitude: deSerialObj.latitude,
         longitude: deSerialObj.longitude
       };
-      callback(null, coords); //return no error and coordinates
+      console.log(`Our Lat/Long is`, coords);
+      callback(null, coords); //return no error and proper coordinate data
     }
   });
 };
@@ -64,10 +52,8 @@ const fetchCoordsByIP = function(ipAdress, callback) {
 const fetchISSFlyOverTimes  = function(coordinates, callback) {
   // const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=&lon=55.43333.8`;
   const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=${coordinates.latitude}&lon=${coordinates.longitude}`;
-  console.log("Our working link for ISS data is", issDataLink);
-
+  console.log("Our working link for ISS data is: \n", issDataLink);
   request(issDataLink, (err, response, body) =>{
-    // console.log(`error code:`,response.statusCode);
     if (err){
       return callback (err,null);
     }
@@ -82,8 +68,30 @@ const fetchISSFlyOverTimes  = function(coordinates, callback) {
   });
 };
 
-module.exports = {
-  fetchMyIP,
-  fetchCoordsByIP,
-  fetchISSFlyOverTimes
+//nextISSTimesForMyLocation handles our event chain which was initiated in index.js
+const nextISSTimesForMyLocation = function(callback) {
+  fetchMyIP((error, ip) => {
+    if (error) {
+      console.log("It didn't work! Failed to get our IP");
+      return callback(error, null);
+    }
+    fetchCoordsByIP(ip, (error, loc) => {
+      if (error) {
+        console.log("It didn't convert our IP to Lat/Long!");
+        return callback(error, null);
+      }
+      fetchISSFlyOverTimes(loc, (error, nextPasses) => {
+        if (error) {
+          console.log("Couldnt get our ISS data");
+          return callback(error, null);
+        }
+        callback(null, nextPasses);
+      });
+    });
+  });
 };
+
+
+module.exports = {
+  nextISSTimesForMyLocation
+};  //exports our modules to communicate across files

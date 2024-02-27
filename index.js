@@ -1,28 +1,18 @@
-// index.js
+// index.js   runs our logic from iss.js and prints data from multiple APIs
 
-const { fetchMyIP, fetchCoordsByIP, fetchISSFlyOverTimes } = require('./iss');
+const { nextISSTimesForMyLocation } = require('./iss');
 
-fetchMyIP((error, ip) => {
+nextISSTimesForMyLocation((error, passTimes) => {
   if (error) {
-    console.log("It didn't work! Failed to get our IP" , error);
-    return;
+    return console.log("Error Details:\n", error);
   }
 
-  console.log('It worked! Returned our IP:' , ip);
-  //sends our IP info to the API to get our Lat/Long
-  fetchCoordsByIP(ip, (err, coords) => {
-    if (err) {
-      console.log("It didn't convert our IP to Lat/Long!", err);
-      return;
-    }
-    console.log("SUCCESS! It returned out Lat/Long" , coords, typeof coords);
-    //sends our coordinates to the API to get the ISS data
-    fetchISSFlyOverTimes(coords,(err, issData) => {
-      if (err) {
-        console.log("Couldnt get our ISS data: ", err);
-        return;
-      }
-      console.log(`We got our flyover data from our API`, issData);
-    });
-  });
+  // If all of our APIS are successful and our event chain runs correctly
+  // Take our pass times and print them
+  for (const pass of passTimes) {
+    const datetime = new Date(0);
+    datetime.setUTCSeconds(pass.risetime);
+    const duration = pass.duration;
+    console.log(`Our next flyover is ${datetime} for ${duration} seconds`);
+  }
 });
