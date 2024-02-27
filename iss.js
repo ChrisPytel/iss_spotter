@@ -6,7 +6,7 @@
  *   - A callback (to pass back an error or the lat/lng object)
  * Returns (via Callback):
  *   - An error, if any (nullable)
- *   - The lat and lng as an object (null if error). 
+ *   - The lat and lng as an object (null if error).
  *      Example: { latitude: '49.27670', longitude: '-123.13000' }
  */
 
@@ -19,14 +19,13 @@ const fetchMyIP = function(callback) {
     console.log(`Code is: `, response.statusCode);
 
     if (err) {
-      return callback(error, null);      
-    }         
+      return callback(err, null);
+    }
     if (response.statusCode !== 200) {  // if non-200 status, assume server error
       const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${body}`;
       callback(Error(msg), null);
-    return;
-    }
-    else {
+      return;
+    } else {
       const deSerialObj = JSON.parse(body).ip;
       callback(null, deSerialObj);
     }
@@ -35,42 +34,78 @@ const fetchMyIP = function(callback) {
 
 
 
-const fetchCoordsByIP = function (string, callback){
-  console.log(`Checking IPstring`, string);
-  request(`http://ipwho.is/${string}`, (err, response, body) =>{
-    // console.log(`Code for ipwho is: `, response.statusCode);
-    // console.log(`body is`, body);
+const fetchCoordsByIP = function(ipAdress, callback) {
+  console.log(`Checking IPstring`, ipAdress);
+  request(`http://ipwho.is/${ipAdress}`, (err, response, body) =>{
     if (err) {
-      return callback(error, null);      
+      return callback(err, null);
     }
     if (response.statusCode !== 200) {  // if non-200 status, assume server error
-      const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${body}`;
+      const msg = `Status Code ${response.statusCode} when fetching IP.\nResponse: ${body}`;
       callback(Error(msg), null);
-    return;
+      return;
     }
     // if we get a response from server which is 200 but doenst return a proper IP
-    const deSerialObj = JSON.parse(body);    
+    const deSerialObj = JSON.parse(body);
     if (!deSerialObj.success) { // check if "success" is true or not, if returns a falsey conclusion, execute this code
-      const message = `Success status was ${deSerialObj.success}. Server message says: ${deSerialObj.message} when fetching for IP ${deSerialObj.ip}`;
+      const message = `Success status was ${deSerialObj.success}.\nServer message says: ${deSerialObj.message} when fetching for IP ${deSerialObj.ip}`;
       callback(Error(message), null);
       return;
-    }    
-    //If it DOES return a proper ip
-    else {
+    } else {  //If it DOES return a proper ip
       const coords = {
         latitude: deSerialObj.latitude,
         longitude: deSerialObj.longitude
-      }
+      };
       callback(null, coords); //return no error and coordinates
     }
+  });
+};
+
+const fetchISSFlyOverTimes  = function(coordinates, callback) {
+  const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=&lon=55.43333.8`;
+  // const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=${coordinates.latitude}&lon=${coordinates.longitude}`;
+  console.log("Our working link for ISS data is", issDataLink);
+
+  request(issDataLink, (err, response, body) =>{
+    // console.log(`error code:`,response.statusCode);
+    if (err){
+      return callback (err,null);
+    }
+    else if(response.statusCode !== 200){
+      const msg = `Status Code ${response.statusCode} when fetching ISS Flyoverdata.\nResponse: ${body}`;
+      callback(Error(msg), null);
+      return;
+    }
+    const deSerialObj = JSON.parse(body);
+    if (!deSerialObj.response){
+      const message = `Success status was ${deSerialObj.success}. Server message says: ${deSerialObj.message} when fetching for IP ${deSerialObj.ip}`;
+      callback(Error(message), null);
+    }
+
+
+    else{
+      console.log(deSerialObj.response);
+      callback (null, flyovers)
+
+    }
+
+
+
+    
+    
+
+
+
   });
 
 
 
-}
+};
 
 
-module.exports = { 
+module.exports = {
   fetchMyIP,
-  fetchCoordsByIP
- };
+  fetchCoordsByIP,
+  fetchISSFlyOverTimes
+
+};
