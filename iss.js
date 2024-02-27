@@ -1,10 +1,13 @@
+// iss.js
 /**
- * Makes a single API request to retrieve the user's IP address.
+ * Makes a single API request to retrieve the lat/lng for a given IPv4 address.
  * Input:
- *   - A callback (to pass back an error or the IP string)
+ *   - The ip (ipv4) address (string)
+ *   - A callback (to pass back an error or the lat/lng object)
  * Returns (via Callback):
  *   - An error, if any (nullable)
- *   - The IP address as a string (null if error). Example: "162.245.144.188"
+ *   - The lat and lng as an object (null if error). 
+ *      Example: { latitude: '49.27670', longitude: '-123.13000' }
  */
 
 const request = require('request');
@@ -34,9 +37,9 @@ const fetchMyIP = function(callback) {
 
 const fetchCoordsByIP = function (string, callback){
   console.log(`Checking IPstring`, string);
-  request(`http://ipwho.is/5`, (err, response, body) =>{
-    console.log(`Code for ipwho is: `, response.statusCode);
-    console.log(`body is`, body);
+  request(`http://ipwho.is/${string}`, (err, response, body) =>{
+    // console.log(`Code for ipwho is: `, response.statusCode);
+    // console.log(`body is`, body);
     if (err) {
       return callback(error, null);      
     }

@@ -11,14 +11,12 @@ fetchMyIP((error, ip) => {
 
 
   fetchCoordsByIP(ip, (err,data) => {
-    console.log(`fetchCoordsByIP error is:`, err);
-
   if (err) {
-    console.log("It didn't convert our IP to Lat + Long!", err);
+    console.log("It didn't convert our IP to Lat/Long!", err);
     return;
   }
   else if (data) {
-    console.log("It returned out Lat + Long" , data, typeof data);
+    console.log("SUCCESS! It returned out Lat/Long" , data, typeof data);
     return;
   }
   });
