@@ -62,8 +62,8 @@ const fetchCoordsByIP = function(ipAdress, callback) {
 };
 
 const fetchISSFlyOverTimes  = function(coordinates, callback) {
-  const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=&lon=55.43333.8`;
-  // const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=${coordinates.latitude}&lon=${coordinates.longitude}`;
+  // const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=&lon=55.43333.8`;
+  const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=${coordinates.latitude}&lon=${coordinates.longitude}`;
   console.log("Our working link for ISS data is", issDataLink);
 
   request(issDataLink, (err, response, body) =>{
@@ -77,35 +77,13 @@ const fetchISSFlyOverTimes  = function(coordinates, callback) {
       return;
     }
     const deSerialObj = JSON.parse(body);
-    if (!deSerialObj.response){
-      const message = `Success status was ${deSerialObj.success}. Server message says: ${deSerialObj.message} when fetching for IP ${deSerialObj.ip}`;
-      callback(Error(message), null);
-    }
-
-
-    else{
-      console.log(deSerialObj.response);
-      callback (null, flyovers)
-
-    }
-
-
-
-    
-    
-
-
-
+    const flyoverData = deSerialObj.response;
+    callback(null, flyoverData);
   });
-
-
-
 };
-
 
 module.exports = {
   fetchMyIP,
   fetchCoordsByIP,
   fetchISSFlyOverTimes
-
 };

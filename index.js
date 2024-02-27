@@ -19,13 +19,10 @@ fetchMyIP((error, ip) => {
     //sends our coordinates to the API to get the ISS data
     fetchISSFlyOverTimes(coords,(err, issData) => {
       if (err) {
-        console.log("Couldnt get iss Info", err);
+        console.log("Couldnt get our ISS data: ", err);
         return;
       }
-      console.log(`we got data`, issData);
+      console.log(`We got our flyover data from our API`, issData);
     });
-
   });
 });
-
-
