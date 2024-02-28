@@ -1,114 +1,58 @@
-// iss_promised.js
+// iss_promised.js - refactored for promises
 
 const request = require('request-promise-native');
 
 
-/* 
-const fetchMyIP = function(callback) {
-  // use request to fetch IP address from JSON API
-  request(`https://api.ipify.org?format=json`, (err, response, body) =>{
-    console.log(`Response code for fetching our IP is: `, response.statusCode);
-    if (err) {
-      return callback(err, null);
-    }
-    if (response.statusCode !== 200) {  // if non-200 status, assume server error
-      const msg = `Status Code ${response.statusCode} when fetching IP. Response: ${body}`;
-      callback(Error(msg), null);
-      return;
-    } else {
-      const deSerialObj = JSON.parse(body).ip;
-      callback(null, deSerialObj);
-    }
-  });
+//accesses an API that determines my local IP adress
+const fetchMyIP = function() { 
+  //immediately returns the body of our API data  
+  return request(`https://api.ipify.org?format=json`);
 };
 
- */
-
-const fetchMyIP = function() {
-  return request('https://api.ipify.org?format=json');
+//passes our IP into an API that retrieves location data
+const fetchCoordsByIP = function(ipAdress) {
+  const ipObject = JSON.parse(ipAdress).ip; //selects only the ip and deserializes it to an obj
+  console.log(`Checking our parsed ipObj:`, ipObject);
+  return request(`http://ipwho.is/${ipObject}`);
 };
 
-
-const fetchCoordsByIP = function(body) {
-  console.log("checking our ip:", body);
-  const ip = JSON.parse(body).ip;
-  console.log(ip);
-  return request(`http://ipwho.is/${ip}`);
+const fetchISSFlyOverTimes = function(body) {  
+  // console.log(`iss body`, body);
+  const { latitude, longitude } = JSON.parse(body); //deserializes lat/long and stores them as numbers
+  //Reminder for later: ^ Object destructuring lets you extract properties from an object and assign them to variables with the same name
+  console.log(`Lat/Long to pass along to flyoverapi are:`, latitude ,`and`,  longitude);
+  return request(`https://iss-flyover.herokuapp.com/json/?lat=${latitude}&lon=${longitude}`);
 };
 
-
-/* 
-const fetchCoordsByIP = function(ipAdress, callback) {
-  console.log(`Checking IPstring:`, ipAdress);
-  request(`http://ipwho.is/${ipAdress}`, (err, response, body) =>{
-    if (err) {
-      return callback(err, null);
-    }
-    if (response.statusCode !== 200) {  // if non-200 status, assume server error
-      const msg = `Status Code ${response.statusCode} when fetching IP.\nResponse: ${body}`;
-      callback(Error(msg), null);
-      return;
-    }
-    // if we get a response from server which is 200 but doenst return a proper IP
-    const deSerialObj = JSON.parse(body);
-    if (!deSerialObj.success) { // check if "success" is true or not, if returns a falsey conclusion, execute this code
-      const message = `Success status was ${deSerialObj.success}.\nServer message says: ${deSerialObj.message} when fetching for IP ${deSerialObj.ip}`;
-      callback(Error(message), null);
-      return;
-    } else if (deSerialObj.latitude || deSerialObj.longitude){  //If it DOES locate correct lat/long
-      const coords = {
-        latitude: deSerialObj.latitude,
-        longitude: deSerialObj.longitude
-      };
-      console.log(`Our Lat/Long is`, coords);
-      callback(null, coords); //return no error and proper coordinate data
-    }
-  });
-};
- */
-
-
-const fetchISSFlyOverTimes = function(body) {
-  const { latitude, longitude } = JSON.parse(body);
-  const url = `https://iss-flyover.herokuapp.com/json/?lat=${latitude}&lon=${longitude}`;
-  return request(url);
-};
-
-/* 
-const fetchISSFlyOverTimes  = function(coordinates, callback) {
-  // const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=&lon=55.43333.8`;
-  const issDataLink = `https://iss-flyover.herokuapp.com/json/?lat=${coordinates.latitude}&lon=${coordinates.longitude}`;
-  console.log("Our working link for ISS data is: \n", issDataLink);
-  request(issDataLink, (err, response, body) =>{
-    if (err){
-      return callback (err,null);
-    }
-    else if(response.statusCode !== 200){
-      const msg = `Status Code ${response.statusCode} when fetching ISS Flyoverdata.\nResponse: ${body}`;
-      callback(Error(msg), null);
-      return;
-    }
-    const deSerialObj = JSON.parse(body);
-    const flyoverData = deSerialObj.response;
-    callback(null, flyoverData);
-  });
-};
- */
 
 const nextISSTimesForMyLocation = function() {
-    fetchMyIP()
-    .then(fetchCoordsByIP)
-    .then(fetchISSFlyOverTimes)
-    .then((body) => {  
-      const deSerialObj = JSON.parse(body);
-      const flyoverData = deSerialObj.response;
-      console.log(`we got our final data: `, flyoverData); 
-      return flyoverData;
+    fetchMyIP() //runs fetchMyIP and returns its value, passing to the next promise
+    .then(fetchCoordsByIP) // runs fetchCoordsByIP and returns its value, passing to the next promise
+    .then(fetchISSFlyOverTimes) // runs fetchISSFlyOverTimes and returns its value, passing to the next promise
+    .then((body) => {      
+      console.log(`Our final data is:`, body);
+      // If all of our APIS are successful and our event chain runs correctly
+      // Take our pass times and print them
+
+      const effect = {
+        reset: "\x1b[0m",
+        cyan: "\x1b[36m",
+    };
+
+      const passTimes = JSON.parse(body).response;
+      for (const pass of passTimes) {
+        const datetime = new Date(0);
+        datetime.setUTCSeconds(pass.risetime);
+        const duration = pass.duration;
+        console.log(`\nKeep an eye on the Sky!\nThe ISS will pass overhead on ` + effect.cyan + `${datetime} for` + effect.reset + ` ${duration} seconds!`);
+      }
     })
-    .catch((error) => {
-      return error;
-    });
-  
+    .catch(error => console.log(`\n!!! Something did not properly, check error log below !!!\n\n${error}`));  
 };
 
-module.exports = { nextISSTimesForMyLocation };
+module.exports = { 
+  fetchMyIP,
+  fetchCoordsByIP,
+  fetchISSFlyOverTimes,  
+  nextISSTimesForMyLocation 
+}; //exports our modules for communication across files
