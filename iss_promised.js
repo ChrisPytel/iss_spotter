@@ -4,8 +4,8 @@ const request = require('request-promise-native');
 
 
 //accesses an API that determines my local IP adress
-const fetchMyIP = function() { 
-  //immediately returns the body of our API data  
+const fetchMyIP = function() {
+  //immediately returns the body of our API data
   return request(`https://api.ipify.org?format=json`);
 };
 
@@ -16,30 +16,27 @@ const fetchCoordsByIP = function(ipAdress) {
   return request(`http://ipwho.is/${ipObject}`);
 };
 
-const fetchISSFlyOverTimes = function(body) {  
+const fetchISSFlyOverTimes = function(body) {
   // console.log(`iss body`, body);
   const { latitude, longitude } = JSON.parse(body); //deserializes lat/long and stores them as numbers
   //Reminder for later: ^ Object destructuring lets you extract properties from an object and assign them to variables with the same name
-  console.log(`Lat/Long to pass along to flyoverapi are:`, latitude ,`and`,  longitude);
+  console.log(`Lat/Long to pass forward to flyoverapi are:`, latitude ,`and`,  longitude);
   return request(`https://iss-flyover.herokuapp.com/json/?lat=${latitude}&lon=${longitude}`);
 };
 
 
 const nextISSTimesForMyLocation = function() {
-    fetchMyIP() //runs fetchMyIP and returns its value, passing to the next promise
+  fetchMyIP() //runs fetchMyIP and returns its value, passing to the next promise
     .then(fetchCoordsByIP) // runs fetchCoordsByIP and returns its value, passing to the next promise
     .then(fetchISSFlyOverTimes) // runs fetchISSFlyOverTimes and returns its value, passing to the next promise
-    .then((body) => {      
-      console.log(`Our final data is:`, body);
+    .then((body) => {
       // If all of our APIS are successful and our event chain runs correctly
-      // Take our pass times and print them
-
-      const effect = {
-        reset: "\x1b[0m",
-        cyan: "\x1b[36m",
-    };
+      // Take our pass times and print them 
 
       const passTimes = JSON.parse(body).response;
+      console.log(`Our final API data is:`, passTimes);
+      const effect = { reset: "\x1b[0m", cyan: "\x1b[36m"};
+
       for (const pass of passTimes) {
         const datetime = new Date(0);
         datetime.setUTCSeconds(pass.risetime);
@@ -47,12 +44,13 @@ const nextISSTimesForMyLocation = function() {
         console.log(`\nKeep an eye on the Sky!\nThe ISS will pass overhead on ` + effect.cyan + `${datetime} for` + effect.reset + ` ${duration} seconds!`);
       }
     })
-    .catch(error => console.log(`\n!!! Something did not properly, check error log below !!!\n\n${error}`));  
+    //if any error case enocuntered, logs the error
+    .catch(error => console.log(`\n!!! Something did not properly, check error log below !!!\n\n${error}`));
 };
 
-module.exports = { 
+module.exports = {
   fetchMyIP,
   fetchCoordsByIP,
-  fetchISSFlyOverTimes,  
-  nextISSTimesForMyLocation 
+  fetchISSFlyOverTimes,
+  nextISSTimesForMyLocation
 }; //exports our modules for communication across files
