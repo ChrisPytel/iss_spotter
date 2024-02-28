@@ -12,7 +12,7 @@ const fetchMyIP = function() {
 //passes our IP into an API that retrieves location data
 const fetchCoordsByIP = function(ipAdress) {
   const ipObject = JSON.parse(ipAdress).ip; //selects only the ip and deserializes it to an obj
-  console.log(`Checking our parsed ipObj:`, ipObject);
+  console.log(`Our deserialized ipObject to pass into ipwho.is:`, ipObject);
   return request(`http://ipwho.is/${ipObject}`);
 };
 
@@ -27,25 +27,24 @@ const fetchISSFlyOverTimes = function(body) {
 
 const nextISSTimesForMyLocation = function() {
   fetchMyIP() //runs fetchMyIP and returns its value, passing to the next promise
-    .then(fetchCoordsByIP) // runs fetchCoordsByIP and returns its value, passing to the next promise
-    .then(fetchISSFlyOverTimes) // runs fetchISSFlyOverTimes and returns its value, passing to the next promise
-    .then((body) => {
-      // If all of our APIS are successful and our event chain runs correctly
-      // Take our pass times and print them 
+  .then(fetchCoordsByIP) // runs fetchCoordsByIP and returns its value, passing to the next promise
+  .then(fetchISSFlyOverTimes) // runs fetchISSFlyOverTimes and returns its value, passing to the next promise
+  .then((body) => {
+    // If all of our APIS are successful and our event chain runs correctly
+    // Take our pass times and print them 
 
-      const passTimes = JSON.parse(body).response;
-      console.log(`Our final API data is:`, passTimes);
-      const effect = { reset: "\x1b[0m", cyan: "\x1b[36m"};
+    const passTimes = JSON.parse(body).response;
+    console.log(`Our final API data is:`, passTimes);
+    const effect = { reset: "\x1b[0m", cyan: "\x1b[36m"}; //defines some colors we can use in console
 
-      for (const pass of passTimes) {
-        const datetime = new Date(0);
-        datetime.setUTCSeconds(pass.risetime);
-        const duration = pass.duration;
-        console.log(`\nKeep an eye on the Sky!\nThe ISS will pass overhead on ` + effect.cyan + `${datetime} for` + effect.reset + ` ${duration} seconds!`);
-      }
-    })
-    //if any error case enocuntered, logs the error
-    .catch(error => console.log(`\n!!! Something did not properly, check error log below !!!\n\n${error}`));
+    for (const pass of passTimes) {
+      const datetime = new Date(0);
+      datetime.setUTCSeconds(pass.risetime);
+      console.log(`\nKeep an eye on the Sky!\nThe ISS will pass overhead on ` + effect.cyan + `${datetime} for` + effect.reset + ` ${pass.duration} seconds!`);
+    }
+  })
+  //if any error case enocuntered, logs the error
+  .catch(error => console.log(`\n!!! Something did not properly, check error log below !!!\n\n${error}`));
 };
 
 module.exports = {
